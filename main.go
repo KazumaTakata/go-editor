@@ -72,9 +72,22 @@ func move_cursor(key tcell.Key, cursor_pos *CursorPos, text_data []string, keydo
 
 }
 
+	
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
 func main() {
 
-	input_data, _ := ioutil.ReadFile("sample.txt")
+
+    if len(os.Args) < 2 {
+        panic("please specify your filename.")        
+    }
+    filename := os.Args[1]
+
+	input_data, _ := ioutil.ReadFile(filename)
 	text_data := strings.Split(string(input_data), "\n")
    
       
@@ -136,7 +149,14 @@ func main() {
                     text_data[cursor_pos.y] = text_data[cursor_pos.y][:cursor_pos.x - 1] +  text_data[cursor_pos.y][cursor_pos.x:]                    
                     cursor_pos.x -= 1 
                     keydown <- struct{}{}
-                }   
+                }
+                case tcell.KeyCtrlS:
+                     output_data := strings.Join(text_data, "\n") 
+                     err := ioutil.WriteFile(filename, []byte(output_data), 0644)
+                     check(err)
+
+
+                   
 
 				}
 			case *tcell.EventResize:
