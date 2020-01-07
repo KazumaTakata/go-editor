@@ -110,14 +110,33 @@ func main() {
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
 				switch ev.Key() {
-				case tcell.KeyEscape, tcell.KeyEnter:
+
+				case tcell.KeyEscape:
 					close(quit)
 					return
+                case tcell.KeyEnter:
+                    newline_data := text_data[cursor_pos.y][cursor_pos.x:] 
+                    text_data[cursor_pos.y] = text_data[cursor_pos.y][:cursor_pos.x] 
+                    text_data = append(text_data[: cursor_pos.y + 1 ], append([]string{newline_data}, text_data[cursor_pos.y + 1:]...)...)          
+                    cursor_pos.x = 0
+                    cursor_pos.y += 1
+                	keydown <- struct{}{}
+
 				case tcell.KeyCtrlL:
 					screen.Sync()
 
 				case tcell.KeyLeft, tcell.KeyRight, tcell.KeyUp, tcell.KeyDown:
 					move_cursor(ev.Key(), &cursor_pos, text_data, keydown)
+                case tcell.KeyRune:
+                    text_data[cursor_pos.y] = text_data[cursor_pos.y][:cursor_pos.x] + string(ev.Rune()) +  text_data[cursor_pos.y][cursor_pos.x:]                    
+                    cursor_pos.x += 1 
+                	keydown <- struct{}{}
+                case tcell.KeyBackspace2:
+                    if cursor_pos.x > 0 {
+                    text_data[cursor_pos.y] = text_data[cursor_pos.y][:cursor_pos.x - 1] +  text_data[cursor_pos.y][cursor_pos.x:]                    
+                    cursor_pos.x -= 1 
+                    keydown <- struct{}{}
+                }   
 
 				}
 			case *tcell.EventResize:
@@ -146,6 +165,7 @@ loop:
 		case <-quit:
 			break loop
 		case <-keydown:
+            screen.Clear()
 		}
 
 	}
